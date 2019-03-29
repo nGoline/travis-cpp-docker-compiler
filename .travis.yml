@@ -7,9 +7,15 @@ os: linux
 dist: xenial
 
 before_install:
-  - sudo add-apt-repository universe -y
-  - sudo apt-get update -q
-  - sudo apt-get -yq --no-install-suggests --no-install-recommends install curl
+  - ls
+
+addons:
+  apt:
+    packages:
+      - curl
+      - g++-aarch64-linux-gnu
+      - g++-8-aarch64-linux-gnu
+      - gcc-8-aarch64-linux-gnu
 
 script:
   - HOSTS="i686-pc-linux-gnu x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu"
