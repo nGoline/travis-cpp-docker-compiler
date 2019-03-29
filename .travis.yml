@@ -1,32 +1,79 @@
-language: c++
-
-compiler: gcc
-
-os: linux
-
 dist: xenial
-
+os: linux
+language: minimal
+cache:
+  ccache: true
+  directories:
+    - depends/built
+    - depends/sources
+    - $HOME/.ccache
+stages:
+  - test
+env:
+  global:
+    - DOCKER_NAME_TAG=ubuntu:18.04
+    - CCACHE_SIZE=100M
+    - CCACHE_TEMPDIR=/tmp/.ccache-temp
+    - CCACHE_COMPRESS=1
+    - CCACHE_DIR=$HOME/.ccache
+    - BASE_OUTDIR=$TRAVIS_BUILD_DIR/out
+    - DOCKER_PACKAGES="build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git ca-certificates ccache"
 before_install:
-  - ls
-
-addons:
-  apt:
-    packages:
-      - curl
-      - g++-aarch64-linux-gnu
-      - g++-8-aarch64-linux-gnu
-      - gcc-8-aarch64-linux-gnu
-
-script:
-  - HOSTS="i686-pc-linux-gnu x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu"
-  - CONFIGFLAGS="--enable-glibc-back-compat --enable-reduce-exports"
-  - HOST_CFLAGS="-O2 -g"
-  - HOST_CXXFLAGS="-O2 -g"
-  - HOST_LDFLAGS=-static-libstdc++
-
+  - set -o errexit; source .travis/test_03_before_install.sh
 install:
-  - make -C depends 
+  - set -o errexit; source .travis/test_04_install.sh
+before_script:
+  - set -o errexit; source .travis/test_05_before_script.sh
+script:
+  - if [ $SECONDS -gt 1200 ]; then set +o errexit; echo "Travis early exit to cache current state"; false; else set -o errexit; source .travis/test_06_script_a.sh; fi
+  - if [ $SECONDS -gt 1800 ]; then set +o errexit; echo "Travis early exit to cache current state"; false; else set -o errexit; source .travis/test_06_script_b.sh; fi
+after_script:
+  - echo $TRAVIS_COMMIT_RANGE
+  - echo $TRAVIS_COMMIT_LOG
+jobs:
+  include:
 
+    - stage: test
+      name: 'Win32  [GOAL: deploy]'
+      env: >-
+        HOST=i686-w64-mingw32
+        DPKG_ADD_ARCH="i386"
+        RUN_FUNCTIONAL_TESTS=false
+        GOAL="deploy"
+
+    - stage: test
+      name: 'Win64  [GOAL: deploy]'
+      env: >-
+        HOST=x86_64-w64-mingw32
+        RUN_FUNCTIONAL_TESTS=false
+        GOAL="deploy"
+    
+    - stage: test
+      name: '32-bit [GOAL: install]'
+      env: >-
+        HOST=i686-pc-linux-gnu
+        GOAL="install"
+    
+    - stage: test
+      name: 'x86_64 Linux  [GOAL: install]  [bionic]'
+      env: >-
+        HOST=x86_64-unknown-linux-gnu
+        GOAL="install"
+
+    - stage: test
+      name: 'x86_64 Linux  [GOAL: install]  [xenial]'
+      env: >-
+        HOST=x86_64-unknown-linux-gnu
+        DOCKER_NAME_TAG=ubuntu:16.04
+        GOAL="install"
+    
+    - stage: test
+      name: 'macOS 10.10  [GOAL: deploy]'
+      env: >-
+        HOST=x86_64-apple-darwin14
+        OSX_SDK=10.11
+        GOAL="deploy"
+        
 deploy:
   provider: pages
   skip_cleanup: true
