@@ -1,5 +1,5 @@
 # VsCode files
-.vscode
+.vscode/*
 !.vscode/settings.json
 
 # Prerequisites
@@ -10,6 +10,7 @@
 *.lo
 *.o
 *.obj
+*.Po
 
 # Precompiled Headers
 *.gch
@@ -37,10 +38,24 @@
 dockerCITest
 
 # Depends files
-depends
+depends/*
 !depends/builders
 !depends/hosts
 !depends/packages
 !depends/config.*
 !depends/funcs.mk
 !depends/Makefile
+
+# Build Files
+m4
+*.cache
+*.m4
+ltmain.sh
+*.in
+config.*
+configure
+install-sh
+test-driver
+compile
+missing
+depcomp
